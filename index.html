@@ -393,8 +393,8 @@
   }
   function renderDaily(r){
     if(!r.rows.length){document.getElementById('reportResult').innerHTML='<div class="muted">No records for these filters.</div>';return;}
-    var h='<table class="rep"><tr><th>Date</th><th class="l" style="text-align:left">Name</th><th>Branch</th><th>Dept</th><th>Morning In</th><th>Lunch Out</th><th>Lunch In</th><th>Final Out</th><th>Late</th><th>Work Hours</th></tr>';
-    r.rows.forEach(function(x){ h+='<tr><td>'+esc(x.date)+'</td><td class="l">'+esc(x.name)+'</td><td>'+esc(x.branch||'-')+'</td><td>'+esc(x.dept||'-')+'</td><td>'+esc(x.morning||'-')+'</td><td>'+esc(x.lunchout||'-')+'</td><td>'+esc(x.lunchin||'-')+'</td><td>'+esc(x.finalout||'-')+'</td><td style="color:'+(x.late?'#C8102E':'inherit')+'">'+esc(x.late||'-')+'</td><td>'+esc(x.hours||'-')+'</td></tr>'; });
+    var h='<table class="rep"><tr><th>Date</th><th class="l" style="text-align:left">Name</th><th>Branch</th><th>Dept</th><th>Morning In</th><th>Lunch Out</th><th>Lunch In</th><th>Final Out</th><th>Morning In Late</th><th>Lunch In Late</th><th>Work Hours</th></tr>';
+    r.rows.forEach(function(x){ h+='<tr><td>'+esc(x.date)+'</td><td class="l">'+esc(x.name)+'</td><td>'+esc(x.branch||'-')+'</td><td>'+esc(x.dept||'-')+'</td><td>'+esc(x.morning||'-')+'</td><td>'+esc(x.lunchout||'-')+'</td><td>'+esc(x.lunchin||'-')+'</td><td>'+esc(x.finalout||'-')+'</td><td style="color:'+(x.morningLate?'#C8102E':'inherit')+'">'+esc(x.morningLate||'-')+'</td><td style="color:'+(x.lunchLate?'#C8102E':'inherit')+'">'+esc(x.lunchLate||'-')+'</td><td>'+esc(x.hours||'-')+'</td></tr>'; });
     h+='</table>'; document.getElementById('reportResult').innerHTML=h;
   }
 
