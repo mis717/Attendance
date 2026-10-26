@@ -145,6 +145,7 @@
     <div class="tabs"><button id="tabReports" class="tab active">Reports</button><button id="tabManage" class="tab hide">Manage</button></div>
 
     <div id="reportPanel" class="panel">
+      <div class="tabs" style="margin-bottom:12px"><button id="mSummary" class="tab active">Summary</button><button id="mDaily" class="tab">Daily — who came when</button></div>
       <div class="frow"><div><label>From</label><input id="fFrom" type="date"></div><div><label>To</label><input id="fTo" type="date"></div></div>
       <div class="frow"><div><label>Branch</label><select id="fBranch"></select></div><div><label>Department</label><select id="fDept"></select></div></div>
       <button id="btnView" class="btn" style="margin-bottom:10px">View Report</button>
@@ -339,6 +340,17 @@
     switchTab('reports');
   }
   function fillAdminFilters(){ fillSelect('fBranch',LISTS.branches,null,true); fillSelect('fDept',LISTS.departments,null,true); }
+
+  var reportMode='summary';
+  document.getElementById('mSummary').addEventListener('click',function(){setMode('summary');});
+  document.getElementById('mDaily').addEventListener('click',function(){setMode('daily');});
+  function setMode(m){
+    reportMode=m;
+    document.getElementById('mSummary').classList.toggle('active',m==='summary');
+    document.getElementById('mDaily').classList.toggle('active',m==='daily');
+    if(m==='daily'){ var d=new Date(),y=d.getFullYear(),mm=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2); document.getElementById('fFrom').value=y+'-'+mm+'-'+dd; document.getElementById('fTo').value=y+'-'+mm+'-'+dd; }
+    document.getElementById('reportResult').innerHTML='';
+  }
   document.getElementById('tabReports').addEventListener('click',function(){switchTab('reports');});
   document.getElementById('tabManage').addEventListener('click',function(){switchTab('manage');});
   function switchTab(t){
@@ -354,16 +366,16 @@
     var p=reportParams(); if(!p)return;
     btnView.disabled=true;btnView.textContent='Loading…';
     document.getElementById('reportResult').innerHTML='<div class="muted">Loading…</div>';
-    try{ var r=await api(Object.assign({action:'adminReport'},p)); btnView.disabled=false;btnView.textContent='View Report';
+    try{ var r=await api(Object.assign({action:(reportMode==='daily'?'adminDaily':'adminReport')},p)); btnView.disabled=false;btnView.textContent='View Report';
       if(!r.ok){document.getElementById('reportResult').innerHTML='<div class="muted">'+esc(r.msg||'Error')+'</div>';return;}
-      renderReport(r);
+      if(reportMode==='daily') renderDaily(r); else renderReport(r);
     }catch(e){btnView.disabled=false;btnView.textContent='View Report';document.getElementById('reportResult').innerHTML='<div class="muted">Network error.</div>';}
   });
   var btnPdf=document.getElementById('btnPdf');
   btnPdf.addEventListener('click',async function(){
     var p=reportParams(); if(!p)return;
     btnPdf.disabled=true;btnPdf.textContent='Generating…';
-    try{ var r=await api(Object.assign({action:'adminReportPdf'},p)); btnPdf.disabled=false;btnPdf.textContent='Download PDF';
+    try{ var r=await api(Object.assign({action:(reportMode==='daily'?'adminDailyPdf':'adminReportPdf')},p)); btnPdf.disabled=false;btnPdf.textContent='Download PDF';
       if(!r.ok){toast(r.msg||'No data.','err');return;} downloadB64(r.pdf,r.filename||'report.pdf'); toast('Report downloaded ✔','ok');
     }catch(e){btnPdf.disabled=false;btnPdf.textContent='Download PDF';toast('Network error.','err');}
   });
@@ -377,6 +389,12 @@
     var h='<table class="rep"><tr><th class="l" style="text-align:left">Name</th><th>Branch</th><th>Dept</th><th>Present</th><th>Late Days</th><th>Total Late</th><th>Lunch Over Days</th><th>Total Lunch Over</th><th>No-Lunch</th></tr>';
     r.rows.forEach(function(x){ h+='<tr><td class="l">'+esc(x.name)+'</td><td>'+esc(x.branch||'-')+'</td><td>'+esc(x.dept||'-')+'</td><td>'+x.present+'</td><td>'+x.lateDays+'</td><td>'+x.totalLate+'</td><td>'+x.overDays+'</td><td>'+x.totalOver+'</td><td>'+x.noLunch+'</td></tr>'; });
     var t=r.totals; h+='<tr class="tot"><td class="l" colspan="3">TOTAL ('+r.rows.length+')</td><td>'+t.present+'</td><td>'+t.lateDays+'</td><td>'+t.totalLate+'</td><td>'+t.overDays+'</td><td>'+t.totalOver+'</td><td>'+t.noLunch+'</td></tr>';
+    h+='</table>'; document.getElementById('reportResult').innerHTML=h;
+  }
+  function renderDaily(r){
+    if(!r.rows.length){document.getElementById('reportResult').innerHTML='<div class="muted">No records for these filters.</div>';return;}
+    var h='<table class="rep"><tr><th>Date</th><th class="l" style="text-align:left">Name</th><th>Branch</th><th>Dept</th><th>Morning In</th><th>Lunch Out</th><th>Lunch In</th><th>Final Out</th><th>Late</th><th>Work Hours</th></tr>';
+    r.rows.forEach(function(x){ h+='<tr><td>'+esc(x.date)+'</td><td class="l">'+esc(x.name)+'</td><td>'+esc(x.branch||'-')+'</td><td>'+esc(x.dept||'-')+'</td><td>'+esc(x.morning||'-')+'</td><td>'+esc(x.lunchout||'-')+'</td><td>'+esc(x.lunchin||'-')+'</td><td>'+esc(x.finalout||'-')+'</td><td style="color:'+(x.late?'#C8102E':'inherit')+'">'+esc(x.late||'-')+'</td><td>'+esc(x.hours||'-')+'</td></tr>'; });
     h+='</table>'; document.getElementById('reportResult').innerHTML=h;
   }
 
